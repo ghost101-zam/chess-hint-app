@@ -1,5 +1,5 @@
 name: chess_hint_app
-description: Offline local two-player chess with a shared, visible text hint system.
+description: Offline local two-player chess with automatic, shared hints.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -11,7 +11,6 @@ dependencies:
     sdk: flutter
   chess: ^0.8.1
   stockfish: ^1.7.2
-  webview_flutter: ^4.7.0
   cupertino_icons: ^1.0.6
 
 dev_dependencies:
@@ -21,6 +20,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/board3d.html
-    - assets/three.min.js

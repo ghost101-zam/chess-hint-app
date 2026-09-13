@@ -3,7 +3,7 @@ import 'chess_logic.dart';
 import 'stockfish_service.dart';
 import 'hint_service.dart';
 import 'hint_bar.dart';
-import 'board3d_widget.dart';
+import 'board_widget.dart';
 
 void main() {
   runApp(const ChessHintApp());
@@ -17,7 +17,7 @@ class ChessHintApp extends StatelessWidget {
     return MaterialApp(
       title: 'Local Chess + Shared Hints',
       theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF769656),
+        colorSchemeSeed: const Color(0xFF6B3F1D),
         useMaterial3: true,
       ),
       home: const StartScreen(),
@@ -25,9 +25,6 @@ class ChessHintApp extends StatelessWidget {
   }
 }
 
-/// Simple start screen — offline, no login, just choose an orientation
-/// for the initial board render (both players share the same device
-/// face-to-face, so this only affects which side starts "facing" them).
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});
 
@@ -43,7 +40,7 @@ class StartScreen extends StatelessWidget {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('Offline · Shared hints visible to both players'),
+            const Text('Offline · Automatic hints shown to both players'),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () => Navigator.push(
@@ -108,21 +105,29 @@ class _GameScreenState extends State<GameScreen> {
 
   Future<void> _initEngine() async {
     await _engine.init();
-    if (mounted) setState(() => _engineReady = true);
+    if (!mounted) return;
+    setState(() => _engineReady = true);
+    _autoHint(); // Show a hint for the very first move automatically.
+  }
+
+  Future<void> _autoHint() async {
+    if (!_engineReady || _logic.isGameOver) return;
+    setState(() => _thinking = true);
+    final move = await _engine.bestMove(_logic.fen);
+    if (!mounted) return;
+    setState(() {
+      _thinking = false;
+      _currentHint = move != null ? _hintService.buildHint(move, tier: _tier) : null;
+    });
   }
 
   void _onSquareTap(String square) {
-    // Clear any stale hint highlight once the player starts interacting.
-    if (_currentHint != null) {
-      setState(() => _currentHint = null);
-    }
-
     if (_selectedSquare == null) {
       final piece = _logic.pieceAt(square);
       if (piece == null) return;
       final isWhitePiece = piece == piece.toUpperCase();
       final isWhiteTurn = _logic.turnColor == 'w';
-      if (isWhitePiece != isWhiteTurn) return; // not this player's piece
+      if (isWhitePiece != isWhiteTurn) return;
       setState(() {
         _selectedSquare = square;
         _legalTargets = _logic.legalMovesFrom(square);
@@ -143,14 +148,13 @@ class _GameScreenState extends State<GameScreen> {
     setState(() {
       _selectedSquare = null;
       _legalTargets = [];
+      _currentHint = null;
     });
 
     if (applied) {
       _checkGameEnd();
-      // Optional: flip the view automatically after each move so the
-      // board faces whoever's turn it is next. Comment out if you'd
-      // rather players rotate the physical phone themselves.
       setState(() => _flipped = _logic.turnColor == 'b');
+      _autoHint(); // Automatically show the hint for whoever moves next.
     }
   }
 
@@ -183,19 +187,6 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Future<void> _requestHint() async {
-    if (!_engineReady) return;
-    setState(() => _thinking = true);
-    final move = await _engine.bestMove(_logic.fen);
-    if (!mounted) return;
-    setState(() {
-      _thinking = false;
-      _currentHint = move != null
-          ? _hintService.buildHint(move, tier: _tier)
-          : null;
-    });
-  }
-
   @override
   void dispose() {
     _engine.dispose();
@@ -205,6 +196,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1B2A2E),
       appBar: AppBar(
         title: Text(
           'Turn: ${_logic.turnColor == 'w' ? 'White' : 'Black'}'
@@ -225,7 +217,7 @@ class _GameScreenState extends State<GameScreen> {
             children: [
               Expanded(
                 child: Center(
-                  child: Board3DWidget(
+                  child: BoardWidget(
                     logic: _logic,
                     selectedSquare: _selectedSquare,
                     legalTargets: _legalTargets,
@@ -241,9 +233,12 @@ class _GameScreenState extends State<GameScreen> {
                 hint: _currentHint,
                 isThinking: _thinking,
                 tier: _tier,
-                onTierChanged: (t) => setState(() => _tier = t),
-                onRequestHint: _requestHint,
-                onClearHint: () => setState(() => _currentHint = null),
+                onTierChanged: (t) {
+                  setState(() => _tier = t);
+                  _autoHint();
+                },
+                onRequestHint: _autoHint,
+                onClearHint: null,
               ),
             ],
           ),

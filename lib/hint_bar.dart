@@ -57,7 +57,7 @@ class HintBar extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: isThinking ? null : onRequestHint,
                 icon: const Icon(Icons.lightbulb_outline),
-                label: const Text('Show Hint'),
+                label: const Text('Refresh Hint'),
               ),
               const SizedBox(width: 12),
               DropdownButton<HintTier>(
