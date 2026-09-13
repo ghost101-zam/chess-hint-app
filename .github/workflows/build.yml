@@ -13,17 +13,10 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
           channel: 'stable'
 
       - name: Fill in missing native Android scaffolding
         run: flutter create --platforms=android --project-name chess_hint_app .
-
-      - name: Bump Kotlin version for plugin compatibility
-        run: sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.10"/' android/settings.gradle
-
-      - name: Bump compileSdk for stockfish plugin compatibility
-        run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 35/' android/app/build.gradle
 
       - name: Fetch three.min.js (offline-bundled at build time, not runtime)
         run: curl -L -o assets/three.min.js https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/build/three.min.js
