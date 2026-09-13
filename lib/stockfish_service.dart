@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter_stockfish/flutter_stockfish.dart';
+import 'package:stockfish/stockfish.dart';
 
 /// Wraps the local (on-device, offline) Stockfish engine.
 /// No network access is used at any point — flutter_stockfish bundles

@@ -9,9 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  chess: ^0.8.1          # Pure-Dart chess rules engine (move generation/validation)
-  flutter_stockfish: ^0.3.0   # Native Stockfish binding (Android/iOS). See README for setup.
-  webview_flutter: ^4.7.0     # Hosts the local (offline) Three.js 3D board scene
+  chess: ^0.8.1
+  stockfish: ^1.7.2
+  webview_flutter: ^4.7.0
   cupertino_icons: ^1.0.6
 
 dev_dependencies:
