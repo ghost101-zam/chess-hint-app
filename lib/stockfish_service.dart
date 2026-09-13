@@ -2,29 +2,29 @@ import 'dart:async';
 import 'package:stockfish/stockfish.dart';
 
 /// Wraps the local (on-device, offline) Stockfish engine.
-/// No network access is used at any point — flutter_stockfish bundles
-/// the engine binary natively and runs it fully offline.
+/// No network access is used at any point.
 class StockfishService {
   Stockfish? _stockfish;
   bool _ready = false;
 
   Future<void> init() async {
     _stockfish = Stockfish();
-    // Wait for the engine process to report it's ready for commands.
-    await for (final state in _stockfish!.state.stream) {
-      if (state == StockfishState.ready) {
+    final completer = Completer<void>();
+
+    void listener() {
+      if (_stockfish!.state.value == StockfishState.ready) {
         _ready = true;
-        break;
+        if (!completer.isCompleted) completer.complete();
       }
     }
+
+    _stockfish!.state.addListener(listener);
+    listener(); // in case it's already ready
+    await completer.future;
   }
 
   bool get isReady => _ready;
 
-  /// Asks the engine for its best move given a FEN position.
-  /// [thinkTimeMs] controls how long the engine searches — shorter is
-  /// snappier for a casual/beginner-friendly game, longer plays stronger.
-  /// Returns the move in UCI form, e.g. "g1f3" or "e7e8q".
   Future<String?> bestMove(String fen, {int thinkTimeMs = 800}) async {
     if (_stockfish == null || !_ready) return null;
 
@@ -45,7 +45,10 @@ class StockfishService {
 
     return completer.future.timeout(
       Duration(milliseconds: thinkTimeMs + 2000),
-      onTimeout: () => null,
+      onTimeout: () {
+        sub.cancel();
+        return null;
+      },
     );
   }
 
