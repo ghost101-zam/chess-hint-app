@@ -19,7 +19,7 @@ jobs:
         run: flutter create --platforms=android --project-name chess_hint_app .
 
       - name: Pin Android Gradle Plugin to a compatible version
-        run: sed -i 's/id "com.android.application" version "[^"]*"/id "com.android.application" version "8.7.2"/' android/settings.gradle
+        run: sed -i 's/id("com.android.application") version "[^"]*"/id("com.android.application") version "8.7.2"/' android/settings.gradle.kts
 
       - name: Fetch three.min.js (offline-bundled at build time, not runtime)
         run: curl -L -o assets/three.min.js https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/build/three.min.js
